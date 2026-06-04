@@ -1,0 +1,38 @@
+{
+  "name": "umi4-admin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "max dev",
+    "build": "max build",
+    "postinstall": "max setup",
+    "lint": "max lint",
+    "test": "max test"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.3.0",
+    "@ant-design/pro-components": "^2.6.0",
+    "@ant-design/x": "^1.0.0",
+    "antd": "^5.15.0",
+    "dayjs": "^1.11.10",
+    "echarts": "^5.5.0",
+    "echarts-for-react": "^3.0.2",
+    "jsencrypt": "^3.3.2",
+    "lodash-es": "^4.17.21",
+    "qrcode.react": "^3.1.0",
+    "query-string": "^9.0.0",
+    "umi": "^4.1.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@umijs/lint": "^4.1.0",
+    "@umijs/max": "^4.1.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.0"
+  }
+}
