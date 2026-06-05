@@ -26,7 +26,7 @@ function NoticeDetail({ id }: { id: string }) {
 
   return (
     <Card title={detail.title} extra={<Button onClick={() => history.back()}>返回</Button>}>
-      <p style={{ color: '#999', marginBottom: 16 }}>{detail.createTime}</p>
+      <p style={{ color: 'var(--text-tertiary)', marginBottom: 16 }}>{detail.createTime}</p>
       <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(detail.content) }} />
     </Card>
   )

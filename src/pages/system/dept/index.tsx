@@ -1,16 +1,14 @@
 import React, { useState, useRef } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
-import { Button, Tag, Modal, message, Popconfirm, Form, Input, InputNumber, TreeSelect, Select } from 'antd'
+import { ProTable, ModalForm, ProFormText, ProFormSelect, ProFormTextArea, ProFormDigit, ProFormTreeSelect, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag, message, Popconfirm } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons'
 import { listDept, addDept, updateDept, deleteDept, exportDept } from '@/services/system/dept'
 import { useDownload } from '@/hooks/useDownload'
 
 export default function DeptPage() {
   const actionRef = useRef<ActionType>()
-  const [form] = Form.useForm()
+  const [editingRecord, setEditingRecord] = useState<any>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [modalTitle, setModalTitle] = useState('')
-  const [editingId, setEditingId] = useState<string>('')
   const [deptData, setDeptData] = useState<any[]>([])
   const { download } = useDownload()
 
@@ -36,31 +34,13 @@ export default function DeptPage() {
   ]
 
   const handleAdd = (parentId?: string) => {
-    setModalTitle('新增部门')
-    setEditingId('')
-    form.resetFields()
-    if (parentId) form.setFieldsValue({ parentId })
+    setEditingRecord(parentId ? { parentId } : null)
     setModalOpen(true)
   }
 
   const handleEdit = (record: any) => {
-    setModalTitle('编辑部门')
-    setEditingId(record.id)
-    form.setFieldsValue(record)
+    setEditingRecord(record)
     setModalOpen(true)
-  }
-
-  const handleSubmit = async () => {
-    const values = await form.validateFields()
-    if (editingId) {
-      await updateDept(values, editingId)
-      message.success('修改成功')
-    } else {
-      await addDept(values)
-      message.success('新增成功')
-    }
-    setModalOpen(false)
-    actionRef.current?.reload()
   }
 
   const handleDelete = async (id: string) => {
@@ -87,25 +67,30 @@ export default function DeptPage() {
         <Button key="export" icon={<ExportOutlined />} onClick={() => download(() => exportDept({}), '部门列表.xlsx')}>导出</Button>,
       ]}
     >
-      <Modal title={modalTitle} open={modalOpen} onOk={handleSubmit} onCancel={() => setModalOpen(false)} width={500}>
-        <Form form={form} layout="vertical">
-          <Form.Item name="parentId" label="上级部门">
-            <TreeSelect treeData={deptData} placeholder="请选择" allowClear fieldNames={{ label: 'name', value: 'id', children: 'children' }} />
-          </Form.Item>
-          <Form.Item name="name" label="部门名称" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="sort" label="排序" initialValue={1}>
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="status" label="状态" initialValue={1}>
-            <Select options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <ModalForm
+        title={editingRecord?.id ? '编辑部门' : '新增部门'}
+        open={modalOpen}
+        onOpenChange={(open) => { if (!open) setModalOpen(false) }}
+        width={500}
+        modalProps={{ destroyOnClose: true }}
+        request={async () => editingRecord || {}}
+        onFinish={async (values) => {
+          if (editingRecord?.id) {
+            await updateDept(values, editingRecord.id)
+            message.success('修改成功')
+          } else {
+            await addDept(values)
+            message.success('新增成功')
+          }
+          return true
+        }}
+      >
+        <ProFormTreeSelect name="parentId" label="上级部门" fieldProps={{ treeData: deptData, placeholder: '请选择', allowClear: true, fieldNames: { label: 'name', value: 'id', children: 'children' } }} />
+        <ProFormText name="name" label="部门名称" rules={[{ required: true }]} />
+        <ProFormDigit name="sort" label="排序" initialValue={1} fieldProps={{ min: 1 }} />
+        <ProFormSelect name="status" label="状态" initialValue={1} options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
+        <ProFormTextArea name="description" label="描述" fieldProps={{ rows: 3 }} />
+      </ModalForm>
     </ProTable>
   )
 }

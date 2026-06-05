@@ -19,6 +19,7 @@ interface AppState {
   setMenuCollapse: (collapse: boolean) => void
   setLayout: (layout: AppState['layout']) => void
   setSiteConfig: (config: Record<string, string>) => void
+  initTheme: () => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -40,8 +41,22 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const newTheme = state.theme === 'light' ? 'dark' : 'light'
           document.documentElement.setAttribute('data-theme', newTheme)
+          if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark')
+          } else {
+            document.documentElement.classList.remove('dark')
+          }
           return { theme: newTheme }
         }),
+      initTheme: () => {
+        const theme = useAppStore.getState().theme
+        document.documentElement.setAttribute('data-theme', theme)
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      },
       setThemeColor: (color) => set({ themeColor: color }),
       setMenuCollapse: (collapse) => set({ menuCollapse: collapse }),
       setLayout: (layout) => set({ layout }),

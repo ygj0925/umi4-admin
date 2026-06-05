@@ -1,16 +1,14 @@
 import React, { useState, useRef } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
-import { Button, Space, Tag, Modal, message, Popconfirm, Form, Input, Select, Switch, Drawer } from 'antd'
+import { ProTable, DrawerForm, ProFormText, ProFormSelect, ProFormTextArea, ProFormSwitch, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag, message, Popconfirm, Drawer } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { listNotice, addNotice, updateNotice, deleteNotice, getNotice } from '@/services/system/notice'
 import { sanitizeHtml } from '@/utils/sanitize'
 
 export default function NoticePage() {
   const actionRef = useRef<ActionType>()
-  const [form] = Form.useForm()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerTitle, setDrawerTitle] = useState('')
-  const [editingId, setEditingId] = useState<string>('')
+  const [editingRecord, setEditingRecord] = useState<any>(null)
   const [detailDrawer, setDetailDrawer] = useState(false)
   const [detail, setDetail] = useState<any>(null)
 
@@ -43,16 +41,12 @@ export default function NoticePage() {
   ]
 
   const handleAdd = () => {
-    setDrawerTitle('新增公告')
-    setEditingId('')
-    form.resetFields()
+    setEditingRecord(null)
     setDrawerOpen(true)
   }
 
   const handleEdit = (record: any) => {
-    setDrawerTitle('编辑公告')
-    setEditingId(record.id)
-    form.setFieldsValue(record)
+    setEditingRecord(record)
     setDrawerOpen(true)
   }
 
@@ -60,19 +54,6 @@ export default function NoticePage() {
     const res = await getNotice(id)
     setDetail(res.data)
     setDetailDrawer(true)
-  }
-
-  const handleSubmit = async () => {
-    const values = await form.validateFields()
-    if (editingId) {
-      await updateNotice(values, editingId)
-      message.success('修改成功')
-    } else {
-      await addNotice(values)
-      message.success('新增成功')
-    }
-    setDrawerOpen(false)
-    actionRef.current?.reload()
   }
 
   const handleDelete = async (id: string) => {
@@ -99,26 +80,34 @@ export default function NoticePage() {
           <Button key="add" type="primary" icon={<PlusOutlined />} onClick={handleAdd}>新增公告</Button>,
         ]}
       />
-      <Drawer title={drawerTitle} open={drawerOpen} onClose={() => setDrawerOpen(false)} width={600} extra={
-        <Space>
-          <Button onClick={() => setDrawerOpen(false)}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>确定</Button>
-        </Space>
-      }>
-        <Form form={form} layout="vertical">
-          <Form.Item name="title" label="标题" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="type" label="类型" rules={[{ required: true }]}>
-            <Select options={[{ label: '通知', value: '1' }, { label: '公告', value: '2' }]} />
-          </Form.Item>
-          <Form.Item name="content" label="内容" rules={[{ required: true }]}><Input.TextArea rows={8} /></Form.Item>
-          <Form.Item name="isTop" label="置顶" valuePropName="checked"><Switch /></Form.Item>
-        </Form>
-      </Drawer>
+      <DrawerForm
+        title={editingRecord ? '编辑公告' : '新增公告'}
+        open={drawerOpen}
+        onOpenChange={(open) => { if (!open) setDrawerOpen(false) }}
+        width={600}
+        drawerProps={{ destroyOnClose: true }}
+        request={async () => editingRecord || {}}
+        onFinish={async (values) => {
+          if (editingRecord?.id) {
+            await updateNotice(values, editingRecord.id)
+            message.success('修改成功')
+          } else {
+            await addNotice(values)
+            message.success('新增成功')
+          }
+          return true
+        }}
+      >
+        <ProFormText name="title" label="标题" rules={[{ required: true }]} />
+        <ProFormSelect name="type" label="类型" rules={[{ required: true }]} options={[{ label: '通知', value: '1' }, { label: '公告', value: '2' }]} />
+        <ProFormTextArea name="content" label="内容" rules={[{ required: true }]} fieldProps={{ rows: 8 }} />
+        <ProFormSwitch name="isTop" label="置顶" />
+      </DrawerForm>
       <Drawer title="公告详情" open={detailDrawer} onClose={() => setDetailDrawer(false)} width={600}>
         {detail && (
           <div>
             <h3>{detail.title}</h3>
-            <p style={{ color: '#999', marginBottom: 16 }}>{detail.createTime}</p>
+            <p style={{ color: 'var(--text-tertiary)', marginBottom: 16 }}>{detail.createTime}</p>
             <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(detail.content) }} />
           </div>
         )}

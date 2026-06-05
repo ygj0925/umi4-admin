@@ -38,12 +38,12 @@ export default function ResourceBoardPage() {
     <div>
       <Card title="资源看板" extra={<Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>刷新</Button>} style={{ marginBottom: 16 }}>
         <Row gutter={16}>
-          <Col span={4}><Statistic title="总事项" value={stats?.total || 0} /></Col>
-          <Col span={4}><Statistic title="进行中" value={stats?.byStatus?.in_progress || 0} valueStyle={{ color: '#1890ff' }} prefix={<ClockCircleOutlined />} /></Col>
-          <Col span={4}><Statistic title="已完成" value={stats?.byStatus?.completed || 0} valueStyle={{ color: '#52c41a' }} prefix={<CheckCircleOutlined />} /></Col>
-          <Col span={4}><Statistic title="有风险" value={stats?.byStatus?.at_risk || 0} valueStyle={{ color: '#faad14' }} prefix={<WarningOutlined />} /></Col>
-          <Col span={4}><Statistic title="已阻塞" value={stats?.byStatus?.blocked || 0} valueStyle={{ color: '#ff4d4f' }} /></Col>
-          <Col span={4}><Statistic title="已逾期" value={stats?.overdueCount || 0} valueStyle={{ color: '#ff4d4f' }} /></Col>
+          <Col xs={12} sm={8} lg={4}><Statistic title="总事项" value={stats?.total || 0} /></Col>
+          <Col xs={12} sm={8} lg={4}><Statistic title="进行中" value={stats?.byStatus?.in_progress || 0} valueStyle={{ color: '#3B82F6' }} prefix={<ClockCircleOutlined />} /></Col>
+          <Col xs={12} sm={8} lg={4}><Statistic title="已完成" value={stats?.byStatus?.completed || 0} valueStyle={{ color: '#10B981' }} prefix={<CheckCircleOutlined />} /></Col>
+          <Col xs={12} sm={8} lg={4}><Statistic title="有风险" value={stats?.byStatus?.at_risk || 0} valueStyle={{ color: '#F59E0B' }} prefix={<WarningOutlined />} /></Col>
+          <Col xs={12} sm={8} lg={4}><Statistic title="已阻塞" value={stats?.byStatus?.blocked || 0} valueStyle={{ color: '#EF4444' }} /></Col>
+          <Col xs={12} sm={8} lg={4}><Statistic title="已逾期" value={stats?.overdueCount || 0} valueStyle={{ color: '#EF4444' }} /></Col>
         </Row>
       </Card>
 
@@ -81,7 +81,7 @@ export default function ResourceBoardPage() {
                     title={<span>{task.title} <Tag color={STATUS_COLOR_MAP[task.status as keyof typeof STATUS_COLOR_MAP]}>{STATUS_MAP[task.status as keyof typeof STATUS_MAP]}</Tag></span>}
                     description={task.latestProgress || task.description || '暂无进展'}
                   />
-                  <span style={{ color: '#999', fontSize: 12 }}>{task.updateTime}</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{task.updateTime}</span>
                 </List.Item>
               )}
             />

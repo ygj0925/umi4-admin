@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { history } from 'umi'
-import { Form, Input, Button, Tabs, Checkbox, message, Space } from 'antd'
+import { Form, Input, Button, Tabs, Checkbox, Space, theme } from 'antd'
 import { UserOutlined, LockOutlined, SafetyOutlined, MobileOutlined, MailOutlined } from '@ant-design/icons'
 import { useUserStore } from '@/stores/useUserStore'
+import { useAppStore } from '@/stores/useAppStore'
 import { getImageCaptcha } from '@/services/captcha'
 import { encryptByRsa } from '@/utils/encrypt'
 import { sanitizeHtml } from '@/utils/sanitize'
@@ -14,6 +15,8 @@ export default function LoginPage() {
   const [captchaUuid, setCaptchaUuid] = useState('')
   const [activeTab, setActiveTab] = useState('account')
   const { login } = useUserStore()
+  const appTheme = useAppStore((s) => s.theme)
+  const isDark = appTheme === 'dark'
 
   const loadCaptcha = useCallback(async () => {
     try {
@@ -52,10 +55,8 @@ export default function LoginPage() {
         data.authType = 'EMAIL'
       }
       await login(data)
-      message.success('登录成功')
       history.push('/')
     } catch (err: any) {
-      message.error(err?.message || '登录失败')
       loadCaptcha()
     } finally {
       setLoading(false)
@@ -66,58 +67,187 @@ export default function LoginPage() {
     <div style={{
       display: 'flex',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #165DFF 0%, #36a3f7 100%)',
+      background: isDark ? '#0F0F23' : '#F8F9FC',
+      transition: 'background 0.3s',
     }}>
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        color: '#fff',
-        padding: 40,
-      }} className="hidden md:flex">
-        <h1 style={{ fontSize: 42, fontWeight: 'bold', marginBottom: 16 }}>SSS Admin</h1>
-        <p style={{ fontSize: 18, opacity: 0.85 }}>企业级后台管理系统</p>
+      {/* ─── Left Panel - Brand ──────────────────────────── */}
+      <div
+        className="hidden md:flex"
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          background: isDark
+            ? 'linear-gradient(135deg, #1E1B4B 0%, #0F0F23 50%, #1A1A2E 100%)'
+            : 'linear-gradient(135deg, #312E81 0%, #4F46E5 40%, #6366F1 100%)',
+        }}
+      >
+        {/* Subtle grid pattern */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `radial-gradient(circle at 1px 1px, ${isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)'} 1px, transparent 0)`,
+          backgroundSize: '32px 32px',
+        }} />
+
+        {/* Glow accent */}
+        <div style={{
+          position: 'absolute',
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: isDark
+            ? 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)',
+          top: '30%',
+          left: '20%',
+          filter: 'blur(60px)',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: 40 }}>
+          <div style={{
+            width: 64,
+            height: 64,
+            borderRadius: 16,
+            background: 'rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+            color: '#fff',
+            fontWeight: 800,
+            fontSize: 28,
+            letterSpacing: '-1px',
+          }}>
+            S
+          </div>
+          <h1 style={{
+            fontSize: 40,
+            fontWeight: 700,
+            color: '#fff',
+            marginBottom: 12,
+            letterSpacing: '-0.5px',
+            lineHeight: 1.2,
+          }}>
+            SSS Admin
+          </h1>
+          <p style={{
+            fontSize: 16,
+            color: 'rgba(255,255,255,0.65)',
+            maxWidth: 320,
+            margin: '0 auto',
+            lineHeight: 1.6,
+          }}>
+            企业级后台管理系统
+          </p>
+        </div>
       </div>
+
+      {/* ─── Right Panel - Login Form ────────────────────── */}
       <div style={{
-        width: 480,
+        width: '100%',
+        maxWidth: 480,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#fff',
-        borderRadius: 8,
-        margin: 'auto',
+        padding: '40px 32px',
+        background: 'var(--bg-card)',
+        transition: 'background 0.3s',
       }}>
-        <div style={{ width: 360, padding: '40px 0' }}>
-          <h2 style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 32, textAlign: 'center' }}>
-            登录
+        <div style={{ width: '100%', maxWidth: 360 }}>
+          {/* Mobile brand */}
+          <div className="md:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: 20,
+            }}>
+              S
+            </div>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>SSS Admin</h2>
+          </div>
+
+          <h2 style={{
+            fontSize: 24,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: 4,
+            letterSpacing: '-0.3px',
+          }}>
+            欢迎回来
           </h2>
+          <p style={{
+            fontSize: 14,
+            color: 'var(--text-tertiary)',
+            marginBottom: 32,
+          }}>
+            登录您的账户以继续
+          </p>
+
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
             centered
             items={[
               { key: 'account', label: '账号登录' },
-              { key: 'phone', label: '手机号登录' },
+              { key: 'phone', label: '手机登录' },
               { key: 'email', label: '邮箱登录' },
             ]}
+            style={{ marginBottom: 8 }}
           />
-          <Form form={form} onFinish={handleLogin} size="large">
+
+          <Form form={form} onFinish={handleLogin} size="large" style={{ marginTop: 16 }}>
             {activeTab === 'account' && (
               <>
                 <Form.Item name="username" rules={[{ required: true, message: '请输入用户名' }]}>
-                  <Input prefix={<UserOutlined />} placeholder="用户名" />
+                  <Input
+                    prefix={<UserOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                    placeholder="用户名"
+                    style={{ height: 44 }}
+                  />
                 </Form.Item>
                 <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
-                  <Input.Password prefix={<LockOutlined />} placeholder="密码" />
+                  <Input.Password
+                    prefix={<LockOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                    placeholder="密码"
+                    style={{ height: 44 }}
+                  />
                 </Form.Item>
                 <Form.Item name="captcha" rules={[{ required: true, message: '请输入验证码' }]}>
-                  <Space style={{ width: '100%' }}>
-                    <Input prefix={<SafetyOutlined />} placeholder="验证码" style={{ flex: 1 }} />
+                  <Space style={{ width: '100%' }} size={8}>
+                    <Input
+                      prefix={<SafetyOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                      placeholder="验证码"
+                      style={{ flex: 1, height: 44 }}
+                    />
                     <div
                       onClick={loadCaptcha}
-                      style={{ cursor: 'pointer', height: 40, width: 120 }}
+                      style={{
+                        cursor: 'pointer',
+                        height: 44,
+                        width: 120,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        border: '1px solid var(--border-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'var(--bg-page)',
+                      }}
                       dangerouslySetInnerHTML={{ __html: sanitizeHtml(captchaImg) }}
                     />
                   </Space>
@@ -127,12 +257,20 @@ export default function LoginPage() {
             {activeTab === 'phone' && (
               <>
                 <Form.Item name="phone" rules={[{ required: true, message: '请输入手机号' }]}>
-                  <Input prefix={<MobileOutlined />} placeholder="手机号" />
+                  <Input
+                    prefix={<MobileOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                    placeholder="手机号"
+                    style={{ height: 44 }}
+                  />
                 </Form.Item>
                 <Form.Item name="phoneCaptcha" rules={[{ required: true, message: '请输入验证码' }]}>
-                  <Space style={{ width: '100%' }}>
-                    <Input prefix={<SafetyOutlined />} placeholder="验证码" style={{ flex: 1 }} />
-                    <Button>获取验证码</Button>
+                  <Space style={{ width: '100%' }} size={8}>
+                    <Input
+                      prefix={<SafetyOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                      placeholder="验证码"
+                      style={{ flex: 1, height: 44 }}
+                    />
+                    <Button style={{ height: 44 }}>获取验证码</Button>
                   </Space>
                 </Form.Item>
               </>
@@ -140,24 +278,44 @@ export default function LoginPage() {
             {activeTab === 'email' && (
               <>
                 <Form.Item name="email" rules={[{ required: true, type: 'email', message: '请输入邮箱' }]}>
-                  <Input prefix={<MailOutlined />} placeholder="邮箱" />
+                  <Input
+                    prefix={<MailOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                    placeholder="邮箱"
+                    style={{ height: 44 }}
+                  />
                 </Form.Item>
                 <Form.Item name="emailCaptcha" rules={[{ required: true, message: '请输入验证码' }]}>
-                  <Space style={{ width: '100%' }}>
-                    <Input prefix={<SafetyOutlined />} placeholder="验证码" style={{ flex: 1 }} />
-                    <Button>获取验证码</Button>
+                  <Space style={{ width: '100%' }} size={8}>
+                    <Input
+                      prefix={<SafetyOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                      placeholder="验证码"
+                      style={{ flex: 1, height: 44 }}
+                    />
+                    <Button style={{ height: 44 }}>获取验证码</Button>
                   </Space>
                 </Form.Item>
               </>
             )}
             <Form.Item>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Checkbox>记住我</Checkbox>
-                <a>忘记密码？</a>
+                <a style={{ fontSize: 13, color: 'var(--accent)' }}>忘记密码？</a>
               </div>
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+                style={{
+                  height: 44,
+                  fontWeight: 600,
+                  fontSize: 15,
+                  borderRadius: 8,
+                  boxShadow: '0 2px 8px rgba(79,70,229,0.25)',
+                }}
+              >
                 登录
               </Button>
             </Form.Item>

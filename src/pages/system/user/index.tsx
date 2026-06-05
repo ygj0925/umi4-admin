@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
-import { Button, Space, Tag, Modal, message, Popconfirm, Drawer, Form, Input, Select, TreeSelect, InputNumber, Row, Col } from 'antd'
+import { ProTable, DrawerForm, ModalForm, ProFormText, ProFormSelect, ProFormTextArea, ProFormTreeSelect, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag, message, Popconfirm } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, ExportOutlined } from '@ant-design/icons'
 import { listUser, addUser, updateUser, deleteUser, resetUserPwd, updateUserRole, exportUser } from '@/services/system/user'
 import { listRoleDict } from '@/services/system/role'
@@ -9,15 +9,12 @@ import { useDownload } from '@/hooks/useDownload'
 
 export default function UserPage() {
   const actionRef = useRef<ActionType>()
-  const [form] = Form.useForm()
-  const [roleForm] = Form.useForm()
-  const [pwdForm] = Form.useForm()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerTitle, setDrawerTitle] = useState('')
-  const [editingId, setEditingId] = useState<string>('')
+  const [editingRecord, setEditingRecord] = useState<any>(null)
   const [roleModalOpen, setRoleModalOpen] = useState(false)
   const [pwdModalOpen, setPwdModalOpen] = useState(false)
   const [currentUserId, setCurrentUserId] = useState('')
+  const [currentRoleIds, setCurrentRoleIds] = useState<number[]>([])
   const [deptTree, setDeptTree] = useState<any[]>([])
   const [roleOptions, setRoleOptions] = useState<any[]>([])
   const { download } = useDownload()
@@ -57,30 +54,13 @@ export default function UserPage() {
   ]
 
   const handleAdd = () => {
-    setDrawerTitle('新增用户')
-    setEditingId('')
-    form.resetFields()
+    setEditingRecord(null)
     setDrawerOpen(true)
   }
 
   const handleEdit = (record: any) => {
-    setDrawerTitle('编辑用户')
-    setEditingId(record.id)
-    form.setFieldsValue(record)
+    setEditingRecord(record)
     setDrawerOpen(true)
-  }
-
-  const handleSubmit = async () => {
-    const values = await form.validateFields()
-    if (editingId) {
-      await updateUser(values, editingId)
-      message.success('修改成功')
-    } else {
-      await addUser(values)
-      message.success('新增成功')
-    }
-    setDrawerOpen(false)
-    actionRef.current?.reload()
   }
 
   const handleDelete = async (id: string) => {
@@ -91,29 +71,13 @@ export default function UserPage() {
 
   const handleResetPwd = (id: string) => {
     setCurrentUserId(id)
-    pwdForm.resetFields()
     setPwdModalOpen(true)
-  }
-
-  const handleResetPwdSubmit = async () => {
-    const values = await pwdForm.validateFields()
-    await resetUserPwd(values, currentUserId)
-    message.success('密码重置成功')
-    setPwdModalOpen(false)
   }
 
   const handleAssignRole = (id: string, roleIds: number[]) => {
     setCurrentUserId(id)
-    roleForm.setFieldsValue({ roleIds })
+    setCurrentRoleIds(roleIds || [])
     setRoleModalOpen(true)
-  }
-
-  const handleAssignRoleSubmit = async () => {
-    const values = await roleForm.validateFields()
-    await updateUserRole({ roleIds: values.roleIds }, currentUserId)
-    message.success('角色分配成功')
-    setRoleModalOpen(false)
-    actionRef.current?.reload()
   }
 
   return (
@@ -147,83 +111,67 @@ export default function UserPage() {
           ]}
           scroll={{ x: 1200 }}
         />
-        <Drawer title={drawerTitle} open={drawerOpen} onClose={() => setDrawerOpen(false)} width={600} extra={
-          <Space>
-            <Button onClick={() => setDrawerOpen(false)}>取消</Button>
-            <Button type="primary" onClick={handleSubmit}>确定</Button>
-          </Space>
-        }>
-          <Form form={form} layout="vertical">
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="username" label="用户名" rules={[{ required: true }]}>
-                  <Input />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="nickname" label="昵称" rules={[{ required: true }]}>
-                  <Input />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="phone" label="手机号">
-                  <Input />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="email" label="邮箱">
-                  <Input />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="gender" label="性别">
-                  <Select options={[{ label: '男', value: 1 }, { label: '女', value: 2 }, { label: '未知', value: 0 }]} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="status" label="状态" initialValue={1}>
-                  <Select options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="deptId" label="部门">
-                  <TreeSelect treeData={deptTree} placeholder="请选择部门" allowClear />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="roleIds" label="角色">
-                  <Select mode="multiple" options={roleOptions} placeholder="请选择角色" />
-                </Form.Item>
-              </Col>
-              {!editingId && (
-                <Col span={12}>
-                  <Form.Item name="password" label="密码" rules={[{ required: true }]}>
-                    <Input.Password />
-                  </Form.Item>
-                </Col>
-              )}
-              <Col span={24}>
-                <Form.Item name="description" label="描述">
-                  <Input.TextArea rows={3} />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </Drawer>
-        <Modal title="重置密码" open={pwdModalOpen} onOk={handleResetPwdSubmit} onCancel={() => setPwdModalOpen(false)}>
-          <Form form={pwdForm} layout="vertical">
-            <Form.Item name="password" label="新密码" rules={[{ required: true }]}>
-              <Input.Password />
-            </Form.Item>
-          </Form>
-        </Modal>
-        <Modal title="分配角色" open={roleModalOpen} onOk={handleAssignRoleSubmit} onCancel={() => setRoleModalOpen(false)}>
-          <Form form={roleForm} layout="vertical">
-            <Form.Item name="roleIds" label="角色" rules={[{ required: true }]}>
-              <Select mode="multiple" options={roleOptions} placeholder="请选择角色" />
-            </Form.Item>
-          </Form>
-        </Modal>
+        <DrawerForm
+          title={editingRecord ? '编辑用户' : '新增用户'}
+          open={drawerOpen}
+          onOpenChange={(open) => { if (!open) setDrawerOpen(false) }}
+          width={600}
+          grid
+          rowProps={{ gutter: 16 }}
+          drawerProps={{ destroyOnClose: true }}
+          request={async () => editingRecord || {}}
+          onFinish={async (values) => {
+            if (editingRecord?.id) {
+              await updateUser(values, editingRecord.id)
+              message.success('修改成功')
+            } else {
+              await addUser(values)
+              message.success('新增成功')
+            }
+            return true
+          }}
+        >
+          <ProFormText colProps={{ span: 12 }} name="username" label="用户名" rules={[{ required: true }]} />
+          <ProFormText colProps={{ span: 12 }} name="nickname" label="昵称" rules={[{ required: true }]} />
+          <ProFormText colProps={{ span: 12 }} name="phone" label="手机号" />
+          <ProFormText colProps={{ span: 12 }} name="email" label="邮箱" />
+          <ProFormSelect colProps={{ span: 12 }} name="gender" label="性别" options={[{ label: '男', value: 1 }, { label: '女', value: 2 }, { label: '未知', value: 0 }]} />
+          <ProFormSelect colProps={{ span: 12 }} name="status" label="状态" initialValue={1} options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
+          <ProFormTreeSelect colProps={{ span: 12 }} name="deptId" label="部门" fieldProps={{ treeData: deptTree, placeholder: '请选择部门', allowClear: true }} />
+          <ProFormSelect colProps={{ span: 12 }} name="roleIds" label="角色" mode="multiple" options={roleOptions} placeholder="请选择角色" />
+          {!editingRecord && (
+            <ProFormText.Password colProps={{ span: 12 }} name="password" label="密码" rules={[{ required: true }]} />
+          )}
+          <ProFormTextArea colProps={{ span: 24 }} name="description" label="描述" fieldProps={{ rows: 3 }} />
+        </DrawerForm>
+        <ModalForm
+          title="重置密码"
+          open={pwdModalOpen}
+          onOpenChange={setPwdModalOpen}
+          modalProps={{ destroyOnClose: true }}
+          onFinish={async (values) => {
+            await resetUserPwd(values, currentUserId)
+            message.success('密码重置成功')
+            return true
+          }}
+        >
+          <ProFormText.Password name="password" label="新密码" rules={[{ required: true }]} />
+        </ModalForm>
+        <ModalForm
+          title="分配角色"
+          open={roleModalOpen}
+          onOpenChange={setRoleModalOpen}
+          modalProps={{ destroyOnClose: true }}
+          request={async () => ({ roleIds: currentRoleIds })}
+          onFinish={async (values) => {
+            await updateUserRole({ roleIds: values.roleIds }, currentUserId)
+            message.success('角色分配成功')
+            actionRef.current?.reload()
+            return true
+          }}
+        >
+          <ProFormSelect name="roleIds" label="角色" mode="multiple" options={roleOptions} rules={[{ required: true }]} placeholder="请选择角色" />
+        </ModalForm>
       </div>
     </div>
   )

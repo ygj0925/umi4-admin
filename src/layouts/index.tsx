@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { Outlet, history, useLocation } from 'umi'
-import { Layout, Menu, Dropdown, Avatar, Breadcrumb, Tabs, Button, theme, Space, Badge } from 'antd'
+import { Layout, Menu, Dropdown, Avatar, Breadcrumb, Tabs, Button, Space, Badge, Tooltip, theme } from 'antd'
 import {
   MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, LogoutOutlined,
   SettingOutlined, BellOutlined, DashboardOutlined, TeamOutlined,
   MenuOutlined, ApartmentOutlined, BookOutlined, SoundOutlined,
   FolderOutlined, SafetyOutlined, CloudOutlined, CodeOutlined,
   ScheduleOutlined, ApiOutlined, ShopOutlined,
+  SunOutlined, MoonOutlined,
 } from '@ant-design/icons'
 import { useAppStore } from '@/stores/useAppStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { useTabsStore } from '@/stores/useTabsStore'
+import { SIDEBAR, LAYOUT } from '@/constants/theme'
 import type { MenuProps } from 'antd'
 
 const { Sider, Header, Content } = Layout
@@ -117,12 +119,14 @@ function getBreadcrumbItems(pathname: string) {
 
 export default function MainLayout() {
   const location = useLocation()
-  const { menuCollapse, setMenuCollapse } = useAppStore()
+  const { menuCollapse, setMenuCollapse, theme: appTheme, toggleTheme } = useAppStore()
   const { userInfo, logout } = useUserStore()
   const { tabList, addTabItem, closeCurrent, closeOther, closeAll } = useTabsStore()
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const { token: themeToken } = theme.useToken()
+
+  const isDark = appTheme === 'dark'
 
   useEffect(() => {
     const path = location.pathname
@@ -180,11 +184,13 @@ export default function MainLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
+      {/* ─── Sidebar ─────────────────────────────────────── */}
       <Sider
         trigger={null}
         collapsible
         collapsed={menuCollapse}
-        width={220}
+        width={SIDEBAR.width}
+        collapsedWidth={SIDEBAR.collapsedWidth}
         style={{
           overflow: 'auto',
           height: '100vh',
@@ -193,20 +199,52 @@ export default function MainLayout() {
           top: 0,
           bottom: 0,
           zIndex: 100,
+          background: SIDEBAR.darkBgGradient,
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+          transition: 'all 0.2s cubic-bezier(0.2, 0, 0, 1)',
         }}
       >
+        {/* Brand */}
         <div style={{
-          height: 64,
+          height: LAYOUT.headerHeight,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#fff',
-          fontSize: menuCollapse ? 16 : 20,
-          fontWeight: 'bold',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          gap: 10,
+          padding: '0 16px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
         }}>
-          {menuCollapse ? 'SSS' : 'SSS Admin'}
+          <div style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 14,
+            letterSpacing: '-0.5px',
+            flexShrink: 0,
+          }}>
+            S
+          </div>
+          {!menuCollapse && (
+            <span style={{
+              color: '#fff',
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: '-0.3px',
+              whiteSpace: 'nowrap',
+            }}>
+              SSS Admin
+            </span>
+          )}
         </div>
+
+        {/* Menu */}
         <Menu
           theme="dark"
           mode="inline"
@@ -215,56 +253,129 @@ export default function MainLayout() {
           onOpenChange={setOpenKeys}
           onClick={handleMenuClick}
           items={menuItems}
+          style={{
+            background: 'transparent',
+            borderRight: 'none',
+            marginTop: 4,
+          }}
         />
       </Sider>
-      <Layout style={{ marginLeft: menuCollapse ? 80 : 220, transition: 'margin-left 0.2s' }}>
+
+      {/* ─── Main Area ───────────────────────────────────── */}
+      <Layout style={{
+        marginLeft: menuCollapse ? SIDEBAR.collapsedWidth : SIDEBAR.width,
+        transition: 'margin-left 0.2s cubic-bezier(0.2, 0, 0, 1)',
+      }}>
+        {/* Header */}
         <Header style={{
-          padding: '0 24px',
-          background: '#fff',
+          padding: '0 20px',
+          height: LAYOUT.headerHeight,
+          background: 'var(--bg-card)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          boxShadow: '0 1px 4px rgba(0,21,41,0.08)',
+          borderBottom: '1px solid var(--border-primary)',
           position: 'sticky',
           top: 0,
           zIndex: 99,
+          transition: 'background-color 0.3s, border-color 0.3s',
         }}>
-          <Space>
+          <Space size={4}>
             <Button
               type="text"
               icon={menuCollapse ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setMenuCollapse(!menuCollapse)}
+              style={{ color: 'var(--text-secondary)', width: 36, height: 36 }}
             />
-            <Breadcrumb items={getBreadcrumbItems(location.pathname)} />
+            <Breadcrumb
+              items={getBreadcrumbItems(location.pathname)}
+              style={{ marginLeft: 4 }}
+            />
           </Space>
-          <Space size={16}>
-            <Badge count={0} size="small">
-              <Button type="text" icon={<BellOutlined />} />
+
+          <Space size={4}>
+            {/* Theme Toggle */}
+            <Tooltip title={isDark ? '切换亮色模式' : '切换暗色模式'}>
+              <Button
+                type="text"
+                icon={isDark ? <SunOutlined /> : <MoonOutlined />}
+                onClick={toggleTheme}
+                style={{ color: 'var(--text-secondary)', width: 36, height: 36 }}
+              />
+            </Tooltip>
+
+            {/* Notifications */}
+            <Badge count={0} size="small" offset={[-2, 2]}>
+              <Button
+                type="text"
+                icon={<BellOutlined />}
+                style={{ color: 'var(--text-secondary)', width: 36, height: 36 }}
+              />
             </Badge>
-            <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight">
-              <Space style={{ cursor: 'pointer' }}>
-                <Avatar size="small" icon={<UserOutlined />} src={userInfo?.avatar} />
-                <span>{userInfo?.nickname || userInfo?.username || 'Admin'}</span>
+
+            {/* User Dropdown */}
+            <Dropdown
+              menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Space style={{ cursor: 'pointer', marginLeft: 4, padding: '4px 8px', borderRadius: 6 }}>
+                <Avatar
+                  size={28}
+                  icon={<UserOutlined />}
+                  src={userInfo?.avatar}
+                  style={{ background: isDark ? '#4F46E5' : '#E0E7FF', color: isDark ? '#fff' : '#4F46E5' }}
+                />
+                <span style={{
+                  color: 'var(--text-primary)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  maxWidth: 80,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {userInfo?.nickname || userInfo?.username || 'Admin'}
+                </span>
               </Space>
             </Dropdown>
           </Space>
         </Header>
+
+        {/* Tabs */}
         {tabList.length > 0 && (
-          <Tabs
-            type="editable-card"
-            hideAdd
-            activeKey={location.pathname}
-            onChange={handleTabChange}
-            onEdit={handleTabEdit}
-            style={{ background: '#fff', paddingLeft: 12, paddingRight: 12 }}
-            items={tabList.map((tab) => ({
-              key: tab.path,
-              label: tab.title,
-              closable: tab.closable,
-            }))}
-          />
+          <div style={{
+            background: 'var(--bg-card)',
+            borderBottom: '1px solid var(--border-secondary)',
+            paddingLeft: 8,
+            paddingRight: 8,
+            transition: 'background-color 0.3s, border-color 0.3s',
+          }}>
+            <Tabs
+              type="editable-card"
+              hideAdd
+              activeKey={location.pathname}
+              onChange={handleTabChange}
+              onEdit={handleTabEdit}
+              size="small"
+              style={{ marginBottom: 0 }}
+              items={tabList.map((tab) => ({
+                key: tab.path,
+                label: tab.title,
+                closable: tab.closable,
+              }))}
+            />
+          </div>
         )}
-        <Content style={{ margin: 16, padding: 24, background: '#f5f5f5', minHeight: 280 }}>
+
+        {/* Content */}
+        <Content style={{
+          margin: LAYOUT.pagePadding,
+          padding: LAYOUT.cardPadding,
+          background: 'var(--bg-page)',
+          minHeight: 280,
+          transition: 'background-color 0.3s',
+        }}>
           <Outlet />
         </Content>
       </Layout>

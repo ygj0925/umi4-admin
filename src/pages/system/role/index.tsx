@@ -1,15 +1,13 @@
 import React, { useState, useRef } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
-import { Button, Space, Tag, Modal, message, Popconfirm, Drawer, Form, Input, InputNumber, Tree, Tabs, Transfer } from 'antd'
+import { ProTable, DrawerForm, ProFormText, ProFormTextArea, ProFormDigit, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag, Modal, message, Popconfirm, Tree } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons'
 import { listRole, addRole, updateRole, deleteRole, listRolePermissionTree, updateRolePermission, listRoleUser, assignToUsers, unassignFromUsers } from '@/services/system/role'
 
 export default function RolePage() {
   const actionRef = useRef<ActionType>()
-  const [form] = Form.useForm()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerTitle, setDrawerTitle] = useState('')
-  const [editingId, setEditingId] = useState<string>('')
+  const [editingRecord, setEditingRecord] = useState<any>(null)
   const [permModalOpen, setPermModalOpen] = useState(false)
   const [permTree, setPermTree] = useState<any[]>([])
   const [checkedKeys, setCheckedKeys] = useState<string[]>([])
@@ -41,30 +39,13 @@ export default function RolePage() {
   ]
 
   const handleAdd = () => {
-    setDrawerTitle('新增角色')
-    setEditingId('')
-    form.resetFields()
+    setEditingRecord(null)
     setDrawerOpen(true)
   }
 
   const handleEdit = (record: any) => {
-    setDrawerTitle('编辑角色')
-    setEditingId(record.id)
-    form.setFieldsValue(record)
+    setEditingRecord(record)
     setDrawerOpen(true)
-  }
-
-  const handleSubmit = async () => {
-    const values = await form.validateFields()
-    if (editingId) {
-      await updateRole(values, editingId)
-      message.success('修改成功')
-    } else {
-      await addRole(values)
-      message.success('新增成功')
-    }
-    setDrawerOpen(false)
-    actionRef.current?.reload()
   }
 
   const handleDelete = async (id: string) => {
@@ -91,44 +72,47 @@ export default function RolePage() {
   }
 
   return (
-    <ProTable
-      headerTitle="角色管理"
-      actionRef={actionRef}
-      rowKey="id"
-      columns={columns}
-      request={async (params) => {
-        const { current, pageSize, ...rest } = params
-        const res = await listRole({ page: current, size: pageSize, ...rest })
-        return { data: res.data?.list || res.data || [], total: res.data?.total || 0, success: true }
-      }}
-      pagination={{ defaultPageSize: 10 }}
-      search={{ labelWidth: 'auto' }}
-      toolBarRender={() => [
-        <Button key="add" type="primary" icon={<PlusOutlined />} onClick={handleAdd}>新增角色</Button>,
-      ]}
-      scroll={{ x: 1000 }}
-    >
-      <Drawer title={drawerTitle} open={drawerOpen} onClose={() => setDrawerOpen(false)} width={500} extra={
-        <Space>
-          <Button onClick={() => setDrawerOpen(false)}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>确定</Button>
-        </Space>
-      }>
-        <Form form={form} layout="vertical">
-          <Form.Item name="name" label="角色名称" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="code" label="角色标识" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="sort" label="排序" initialValue={1}>
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
-      </Drawer>
+    <>
+      <ProTable
+        headerTitle="角色管理"
+        actionRef={actionRef}
+        rowKey="id"
+        columns={columns}
+        request={async (params) => {
+          const { current, pageSize, ...rest } = params
+          const res = await listRole({ page: current, size: pageSize, ...rest })
+          return { data: res.data?.list || res.data || [], total: res.data?.total || 0, success: true }
+        }}
+        pagination={{ defaultPageSize: 10 }}
+        search={{ labelWidth: 'auto' }}
+        toolBarRender={() => [
+          <Button key="add" type="primary" icon={<PlusOutlined />} onClick={handleAdd}>新增角色</Button>,
+        ]}
+        scroll={{ x: 1000 }}
+      />
+      <DrawerForm
+        title={editingRecord ? '编辑角色' : '新增角色'}
+        open={drawerOpen}
+        onOpenChange={(open) => { if (!open) setDrawerOpen(false) }}
+        width={500}
+        drawerProps={{ destroyOnClose: true }}
+        request={async () => editingRecord || {}}
+        onFinish={async (values) => {
+          if (editingRecord?.id) {
+            await updateRole(values, editingRecord.id)
+            message.success('修改成功')
+          } else {
+            await addRole(values)
+            message.success('新增成功')
+          }
+          return true
+        }}
+      >
+        <ProFormText name="name" label="角色名称" rules={[{ required: true }]} />
+        <ProFormText name="code" label="角色标识" rules={[{ required: true }]} />
+        <ProFormDigit name="sort" label="排序" initialValue={1} fieldProps={{ min: 1 }} />
+        <ProFormTextArea name="description" label="描述" fieldProps={{ rows: 3 }} />
+      </DrawerForm>
       <Modal title="权限设置" open={permModalOpen} onOk={handlePermSubmit} onCancel={() => setPermModalOpen(false)} width={600}>
         <Tree
           checkable
@@ -138,6 +122,6 @@ export default function RolePage() {
           defaultExpandAll
         />
       </Modal>
-    </ProTable>
+    </>
   )
 }

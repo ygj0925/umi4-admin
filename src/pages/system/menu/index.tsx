@@ -1,15 +1,13 @@
 import React, { useState, useRef } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
-import { Button, Space, Tag, Modal, message, Popconfirm, Form, Input, InputNumber, Select, Switch, TreeSelect } from 'antd'
+import { ProTable, ModalForm, ProFormText, ProFormSelect, ProFormDigit, ProFormTreeSelect, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag, message, Popconfirm } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons'
 import { listMenu, addMenu, updateMenu, deleteMenu, clearMenuCache } from '@/services/system/menu'
 
 export default function MenuPage() {
   const actionRef = useRef<ActionType>()
-  const [form] = Form.useForm()
+  const [editingRecord, setEditingRecord] = useState<any>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [modalTitle, setModalTitle] = useState('')
-  const [editingId, setEditingId] = useState<string>('')
   const [menuData, setMenuData] = useState<any[]>([])
 
   const columns: ProColumns[] = [
@@ -47,31 +45,13 @@ export default function MenuPage() {
   ]
 
   const handleAdd = (parentId?: string) => {
-    setModalTitle('新增菜单')
-    setEditingId('')
-    form.resetFields()
-    if (parentId) form.setFieldsValue({ parentId })
+    setEditingRecord(parentId ? { parentId } : null)
     setModalOpen(true)
   }
 
   const handleEdit = (record: any) => {
-    setModalTitle('编辑菜单')
-    setEditingId(record.id)
-    form.setFieldsValue(record)
+    setEditingRecord(record)
     setModalOpen(true)
-  }
-
-  const handleSubmit = async () => {
-    const values = await form.validateFields()
-    if (editingId) {
-      await updateMenu(values, editingId)
-      message.success('修改成功')
-    } else {
-      await addMenu(values)
-      message.success('新增成功')
-    }
-    setModalOpen(false)
-    actionRef.current?.reload()
   }
 
   const handleDelete = async (id: string) => {
@@ -104,34 +84,33 @@ export default function MenuPage() {
       ]}
       scroll={{ x: 1200 }}
     >
-      <Modal title={modalTitle} open={modalOpen} onOk={handleSubmit} onCancel={() => setModalOpen(false)} width={600}>
-        <Form form={form} layout="vertical">
-          <Form.Item name="parentId" label="上级菜单">
-            <TreeSelect treeData={menuData} placeholder="请选择" allowClear fieldNames={{ label: 'title', value: 'id', children: 'children' }} />
-          </Form.Item>
-          <Form.Item name="type" label="类型" initialValue={1}>
-            <Select options={[{ label: '目录', value: 1 }, { label: '菜单', value: 2 }, { label: '按钮', value: 3 }]} />
-          </Form.Item>
-          <Form.Item name="title" label="名称" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="path" label="路由地址">
-            <Input />
-          </Form.Item>
-          <Form.Item name="icon" label="图标">
-            <Input />
-          </Form.Item>
-          <Form.Item name="permission" label="权限标识">
-            <Input />
-          </Form.Item>
-          <Form.Item name="sort" label="排序" initialValue={1}>
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="status" label="状态" initialValue={1}>
-            <Select options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <ModalForm
+        title={editingRecord?.id ? '编辑菜单' : '新增菜单'}
+        open={modalOpen}
+        onOpenChange={(open) => { if (!open) setModalOpen(false) }}
+        width={600}
+        modalProps={{ destroyOnClose: true }}
+        request={async () => editingRecord || {}}
+        onFinish={async (values) => {
+          if (editingRecord?.id) {
+            await updateMenu(values, editingRecord.id)
+            message.success('修改成功')
+          } else {
+            await addMenu(values)
+            message.success('新增成功')
+          }
+          return true
+        }}
+      >
+        <ProFormTreeSelect name="parentId" label="上级菜单" fieldProps={{ treeData: menuData, placeholder: '请选择', allowClear: true, fieldNames: { label: 'title', value: 'id', children: 'children' } }} />
+        <ProFormSelect name="type" label="类型" initialValue={1} options={[{ label: '目录', value: 1 }, { label: '菜单', value: 2 }, { label: '按钮', value: 3 }]} />
+        <ProFormText name="title" label="名称" rules={[{ required: true }]} />
+        <ProFormText name="path" label="路由地址" />
+        <ProFormText name="icon" label="图标" />
+        <ProFormText name="permission" label="权限标识" />
+        <ProFormDigit name="sort" label="排序" initialValue={1} fieldProps={{ min: 1 }} />
+        <ProFormSelect name="status" label="状态" initialValue={1} options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
+      </ModalForm>
     </ProTable>
   )
 }

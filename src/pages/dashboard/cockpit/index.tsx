@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { ProTable, ModalForm, ProFormText, ProFormSelect, ProFormDatePicker, ProFormTextArea, ProFormDigit, ProFormRadio, type ActionType, type ProColumns } from '@ant-design/pro-components'
 import {
-  Card, Tag, Badge, Avatar, Button, Space, Input, Modal, Form, Select, DatePicker,
+  Card, Tag, Badge, Avatar, Button, Space, Input, Modal, Form,
   message, Popconfirm, Tooltip, Progress, Timeline, Segmented, Empty, Spin, Tabs,
   Typography, Divider, Row, Col, Alert,
 } from 'antd'
@@ -23,7 +23,6 @@ import {
 
 const { Text, Title } = Typography
 const { TextArea } = Input
-const { RangePicker } = DatePicker
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -84,10 +83,10 @@ const VIEW_TABLE = 'table'
 const VIEW_GANTT = 'gantt'
 
 const PRIORITY_STYLES: Record<TaskPriority, { color: string; bg: string; border: string }> = {
-  P0: { color: '#cf1322', bg: '#fff1f0', border: '#ffa39e' },
-  P1: { color: '#d46b08', bg: '#fff7e6', border: '#ffd591' },
-  P2: { color: '#096dd9', bg: '#e6f7ff', border: '#91d5ff' },
-  P3: { color: '#8c8c8c', bg: '#fafafa', border: '#d9d9d9' },
+  P0: { color: '#EF4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)' },
+  P1: { color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)' },
+  P2: { color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)' },
+  P3: { color: '#71717A', bg: 'rgba(113,113,122,0.06)', border: 'rgba(113,113,122,0.15)' },
 }
 
 const GANTT_MODES = ['day', 'week', 'month'] as const
@@ -120,13 +119,27 @@ const statusIcon = (s: TaskStatus) => {
 const StatCard: React.FC<{
   title: string; value: number; icon: React.ReactNode; color: string; bgColor: string
 }> = ({ title, value, icon, color, bgColor }) => (
-  <Card size="small" style={{ borderTop: `3px solid ${color}` }} bodyStyle={{ padding: '12px 16px' }}>
+  <Card
+    size="small"
+    style={{ borderTop: `3px solid ${color}` }}
+    styles={{ body: { padding: '12px 16px' } }}
+  >
     <div className="flex items-center justify-between">
       <div>
         <Text type="secondary" style={{ fontSize: 13 }}>{title}</Text>
         <div style={{ fontSize: 28, fontWeight: 700, color, lineHeight: 1.3 }}>{value}</div>
       </div>
-      <div style={{ width: 48, height: 48, borderRadius: 12, background: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color }}>
+      <div style={{
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        background: bgColor,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 20,
+        color,
+      }}>
         {icon}
       </div>
     </div>
@@ -144,8 +157,8 @@ const KanbanCardComp: React.FC<{
       size="small"
       hoverable
       className="mb-3"
-      style={{ borderLeft: `4px solid ${pStyle.color}`, borderRadius: 6, cursor: 'pointer' }}
-      bodyStyle={{ padding: '10px 12px' }}
+      style={{ borderLeft: `3px solid ${pStyle.color}`, borderRadius: 6, cursor: 'pointer' }}
+      styles={{ body: { padding: '10px 12px' } }}
       onClick={() => onUpdate(item)}
     >
       <div className="flex items-start justify-between mb-1">
@@ -171,13 +184,13 @@ const KanbanCardComp: React.FC<{
         <Space size={4}>
           {(item.ownerNames || []).slice(0, 3).map((name, i) => (
             <Tooltip key={i} title={name}>
-              <Avatar size={22} style={{ fontSize: 11, background: '#1890ff' }}>
+              <Avatar size={22} style={{ fontSize: 11, background: 'var(--accent, #4F46E5)' }}>
                 {name?.slice(-1)}
               </Avatar>
             </Tooltip>
           ))}
           {(item.ownerNames || []).length > 3 && (
-            <Avatar size={22} style={{ fontSize: 11, background: '#d9d9d9', color: '#666' }}>
+            <Avatar size={22} style={{ fontSize: 11, background: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
               +{item.ownerNames!.length - 3}
             </Avatar>
           )}
@@ -228,7 +241,7 @@ const KanbanView: React.FC<{
             <Space size={6}>
               {statusIcon(group.status)}
               <Text strong>{STATUS_MAP[group.status]}</Text>
-              <Badge count={group.items.length} style={{ backgroundColor: '#d9d9d9' }} />
+              <Badge count={group.items.length} style={{ backgroundColor: 'var(--text-tertiary)' }} />
             </Space>
           </div>
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 360px)' }}>
@@ -370,15 +383,35 @@ const GanttView: React.FC<{
           { label: '月', value: 'month' },
         ]} value={mode} onChange={(v) => setMode(v as GanttMode)} size="small" />
       </div>
-      <div className="border rounded overflow-hidden" style={{ maxHeight: 'calc(100vh - 360px)', overflow: 'auto' }}>
+      <div
+        className="border rounded overflow-hidden"
+        style={{
+          maxHeight: 'calc(100vh - 360px)',
+          overflow: 'auto',
+          borderColor: 'var(--border-primary)',
+        }}
+      >
         {/* Header */}
         <div className="flex" style={{ minWidth: 900 }}>
-          <div style={{ width: 200, flexShrink: 0 }} className="border-r border-b bg-gray-50 px-3 py-2">
+          <div style={{
+            width: 200,
+            flexShrink: 0,
+            background: 'var(--bg-page)',
+            borderRight: '1px solid var(--border-primary)',
+            borderBottom: '1px solid var(--border-primary)',
+          }} className="px-3 py-2">
             <Text strong style={{ fontSize: 13 }}>任务</Text>
           </div>
-          <div className="flex-1 flex border-b bg-gray-50">
+          <div className="flex-1 flex" style={{
+            background: 'var(--bg-page)',
+            borderBottom: '1px solid var(--border-primary)',
+          }}>
             {columns.map((col, i) => (
-              <div key={i} className="flex-1 text-center px-1 py-2" style={{ fontSize: 12, borderRight: '1px solid #f0f0f0', minWidth: 60 }}>
+              <div key={i} className="flex-1 text-center px-1 py-2" style={{
+                fontSize: 12,
+                borderRight: '1px solid var(--border-secondary)',
+                minWidth: 60,
+              }}>
                 <Text type="secondary">
                   {mode === 'day' ? col.format('MM/DD') : mode === 'week' ? col.format('MM/DD') : col.format('YYYY/MM')}
                 </Text>
@@ -390,10 +423,16 @@ const GanttView: React.FC<{
         {grouped.map(([cat, catItems]) => (
           <React.Fragment key={cat}>
             <div className="flex" style={{ minWidth: 900 }}>
-              <div style={{ width: 200, flexShrink: 0 }} className="border-r border-b bg-gray-100 px-3 py-1.5">
-                <Text strong style={{ fontSize: 12, color: '#666' }}>{cat}</Text>
+              <div style={{
+                width: 200,
+                flexShrink: 0,
+                background: 'var(--bg-page)',
+                borderRight: '1px solid var(--border-primary)',
+                borderBottom: '1px solid var(--border-primary)',
+              }} className="px-3 py-1.5">
+                <Text strong style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{cat}</Text>
               </div>
-              <div className="flex-1 border-b" style={{ height: 28 }} />
+              <div className="flex-1" style={{ height: 28, borderBottom: '1px solid var(--border-primary)' }} />
             </div>
             {catItems.map((item) => {
               const start = item.startDate ? dayjs(item.startDate) : rangeStart
@@ -402,24 +441,52 @@ const GanttView: React.FC<{
               const widthPct = Math.max(1, end.diff(start, 'day') / totalDays * 100)
               const pStyle = PRIORITY_STYLES[item.priority] || PRIORITY_STYLES.P3
               return (
-                <div key={item.id} className="flex hover:bg-blue-50 cursor-pointer" style={{ minWidth: 900 }} onClick={() => onUpdate(item)}>
-                  <div style={{ width: 200, flexShrink: 0 }} className="border-r border-b px-3 py-1.5 flex items-center gap-1">
+                <div
+                  key={item.id}
+                  className="flex cursor-pointer"
+                  style={{ minWidth: 900 }}
+                  onClick={() => onUpdate(item)}
+                >
+                  <div style={{
+                    width: 200,
+                    flexShrink: 0,
+                    borderRight: '1px solid var(--border-primary)',
+                    borderBottom: '1px solid var(--border-primary)',
+                  }} className="px-3 py-1.5 flex items-center gap-1">
                     <Tag color={PRIORITY_COLOR_MAP[item.priority]} style={{ margin: 0, fontSize: 11, lineHeight: '16px', padding: '0 4px' }}>{item.priority}</Tag>
                     <Text ellipsis style={{ fontSize: 12, flex: 1 }}>{item.title}</Text>
                   </div>
-                  <div className="flex-1 border-b relative" style={{ height: 32, padding: '4px 0' }}>
+                  <div className="flex-1 relative" style={{ height: 32, padding: '4px 0', borderBottom: '1px solid var(--border-primary)' }}>
                     <Tooltip title={`${item.title} (${dayjs(item.startDate).format('MM/DD')} - ${dayjs(item.deadline).format('MM/DD')})`}>
-                      <div
-                        style={{
-                          position: 'absolute', top: 6, left: `${leftPct}%`, width: `${widthPct}%`,
-                          height: 20, borderRadius: 4, background: pStyle.bg, border: `1px solid ${pStyle.border}`,
-                          display: 'flex', alignItems: 'center', padding: '0 6px', overflow: 'hidden',
-                        }}
-                      >
+                      <div style={{
+                        position: 'absolute',
+                        top: 6,
+                        left: `${leftPct}%`,
+                        width: `${widthPct}%`,
+                        height: 20,
+                        borderRadius: 4,
+                        background: pStyle.bg,
+                        border: `1px solid ${pStyle.border}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 6px',
+                        overflow: 'hidden',
+                      }}>
                         <div style={{
-                          width: `${item.progress || 0}%`, height: '100%', background: pStyle.color, borderRadius: 3, opacity: 0.25,
+                          width: `${item.progress || 0}%`,
+                          height: '100%',
+                          background: pStyle.color,
+                          borderRadius: 3,
+                          opacity: 0.2,
                         }} />
-                        <span style={{ position: 'absolute', left: 6, fontSize: 11, color: pStyle.color, whiteSpace: 'nowrap', fontWeight: 500 }}>
+                        <span style={{
+                          position: 'absolute',
+                          left: 6,
+                          fontSize: 11,
+                          color: pStyle.color,
+                          whiteSpace: 'nowrap',
+                          fontWeight: 500,
+                        }}>
                           {item.title}
                         </span>
                       </div>
@@ -441,89 +508,71 @@ const GanttView: React.FC<{
 
 /** Add / Edit Task Modal */
 const TaskFormModal: React.FC<{
-  open: boolean; title: string; initialValues?: Partial<TaskItem>
+  open: boolean; title: string; editingId?: string
   owners: OwnerOption[]; categories: CategoryOption[]
   onOk: (values: any) => Promise<void>; onCancel: () => void
-}> = ({ open, title, initialValues, owners, categories, onOk, onCancel }) => {
-  const [form] = Form.useForm()
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (open) {
-      if (initialValues?.id) {
-        form.setFieldsValue({
-          ...initialValues,
-          dateRange: initialValues.startDate && initialValues.deadline
-            ? [dayjs(initialValues.startDate), dayjs(initialValues.deadline)]
-            : undefined,
-        })
-      } else {
-        form.resetFields()
-      }
-    }
-  }, [open, initialValues])
-
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields()
-      setSubmitting(true)
-      const { dateRange, ...rest } = values
-      const payload = {
-        ...rest,
-        startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
-        deadline: dateRange?.[1]?.format('YYYY-MM-DD'),
-      }
-      await onOk(payload)
-      form.resetFields()
-    } catch {
-      // validation error
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
+}> = ({ open, title, editingId, owners, categories, onOk, onCancel }) => {
   return (
-    <Modal title={title} open={open} onOk={handleOk} onCancel={onCancel} width={640} confirmLoading={submitting} destroyOnClose>
-      <Form form={form} layout="vertical" initialValues={{ priority: 'P2', ...initialValues }}>
-        <Form.Item name="title" label="任务名称" rules={[{ required: true, message: '请输入任务名称' }]}>
-          <Input placeholder="请输入任务名称" />
-        </Form.Item>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="ownerIds" label="负责人" rules={[{ required: true, message: '请选择负责人' }]}>
-              <Select mode="multiple" placeholder="请选择负责人" allowClear showSearch optionFilterProp="label"
-                options={owners.map((o) => ({ label: o.name, value: o.id }))} />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="priority" label="优先级" rules={[{ required: true }]}>
-              <Select options={['P0', 'P1', 'P2', 'P3'].map((p) => ({ label: p, value: p }))} />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="categoryId" label="所属分类">
-              <Select placeholder="请选择分类" allowClear showSearch optionFilterProp="label"
-                options={categories.map((c) => ({ label: c.name, value: c.id }))} />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="dateRange" label="起止日期">
-              <RangePicker style={{ width: '100%' }} />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item name="description" label="事项描述">
-          <TextArea rows={3} placeholder="请输入事项描述" />
-        </Form.Item>
-        {!initialValues?.id && (
-          <Form.Item name="latestProgress" label="当前进展">
-            <TextArea rows={2} placeholder="请输入当前进展" />
-          </Form.Item>
-        )}
-      </Form>
-    </Modal>
+    <ModalForm
+      title={title}
+      open={open}
+      onOpenChange={(v) => { if (!v) onCancel() }}
+      width={640}
+      request={async () => {
+        if (editingId) {
+          const res = await getTaskItem(editingId)
+          const item = res.data || {}
+          return {
+            ...item,
+            dateRange: item.startDate && item.deadline
+              ? [dayjs(item.startDate), dayjs(item.deadline)]
+              : undefined,
+          }
+        }
+        return { priority: 'P2' }
+      }}
+      onFinish={async (values) => {
+        const { dateRange, ...rest } = values
+        const payload = {
+          ...rest,
+          startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
+          deadline: dateRange?.[1]?.format('YYYY-MM-DD'),
+        }
+        await onOk(payload)
+        return true
+      }}
+      modalProps={{ destroyOnClose: true }}
+    >
+      <ProFormText name="title" label="任务名称" rules={[{ required: true, message: '请输入任务名称' }]} placeholder="请输入任务名称" />
+      <Row gutter={16}>
+        <Col span={12}>
+          <ProFormSelect name="ownerIds" label="负责人" rules={[{ required: true, message: '请选择负责人' }]}
+            placeholder="请选择负责人" mode="multiple" allowClear showSearch
+            options={owners.map((o) => ({ label: o.name, value: o.id }))}
+          />
+        </Col>
+        <Col span={12}>
+          <ProFormSelect name="priority" label="优先级" rules={[{ required: true }]}
+            options={['P0', 'P1', 'P2', 'P3'].map((p) => ({ label: p, value: p }))}
+          />
+        </Col>
+      </Row>
+      <Row gutter={16}>
+        <Col span={12}>
+          <ProFormSelect name="categoryId" label="所属分类"
+            placeholder="请选择分类" allowClear showSearch
+            options={categories.map((c) => ({ label: c.name, value: c.id }))}
+          />
+        </Col>
+        <Col span={12}>
+          <ProFormDatePicker.RangePicker name="dateRange" label="起止日期" />
+        </Col>
+      </Row>
+      <ProFormTextArea name="description" label="事项描述" fieldProps={{ rows: 3 }} placeholder="请输入事项描述" />
+      {!editingId && (
+        <ProFormTextArea name="latestProgress" label="当前进展" fieldProps={{ rows: 2 }} placeholder="请输入当前进展" />
+      )}
+    </ModalForm>
   )
 }
 
@@ -554,7 +603,6 @@ const TaskDetailModal: React.FC<{
       await updateTaskProgress(task!.id, values)
       message.success('进展更新成功')
       progressForm.resetFields()
-      // Refresh detail
       const res = await getTaskItem(task!.id)
       setDetail(res.data)
       onUpdate()
@@ -636,7 +684,6 @@ const TaskDetailModal: React.FC<{
 /*  Main Page                                                          */
 /* ------------------------------------------------------------------ */
 export default function CockpitPage() {
-  // State
   const [view, setView] = useState<string>(VIEW_KANBAN)
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<TaskItem[]>([])
@@ -648,17 +695,15 @@ export default function CockpitPage() {
   const [filterPriority, setFilterPriority] = useState<TaskPriority | ''>('')
   const [activeCategory, setActiveCategory] = useState<string>('all')
 
-  // Modal state
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [formModalTitle, setFormModalTitle] = useState('新增任务')
-  const [editingItem, setEditingItem] = useState<Partial<TaskItem> | undefined>()
+  const [editingId, setEditingId] = useState<string | undefined>()
 
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [detailItem, setDetailItem] = useState<TaskItem | null>(null)
 
   const actionRef = useRef<ActionType>()
 
-  // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
@@ -681,7 +726,6 @@ export default function CockpitPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Filtered items
   const filteredItems = useMemo(() => {
     let list = [...items]
     if (keyword) {
@@ -698,7 +742,6 @@ export default function CockpitPage() {
     return list
   }, [items, keyword, filterStatus, filterPriority, activeCategory])
 
-  // Handlers
   const handleRefresh = () => {
     fetchData()
     actionRef.current?.reload()
@@ -706,7 +749,7 @@ export default function CockpitPage() {
 
   const handleAddTask = () => {
     setFormModalTitle('新增任务')
-    setEditingItem(undefined)
+    setEditingId(undefined)
     setFormModalOpen(true)
   }
 
@@ -716,14 +759,13 @@ export default function CockpitPage() {
   }
 
   const handleFormSubmit = async (values: any) => {
-    if (editingItem?.id) {
-      await updateTaskItem(editingItem.id, values)
+    if (editingId) {
+      await updateTaskItem(editingId, values)
       message.success('修改成功')
     } else {
       await createTaskItem(values)
       message.success('新增成功')
     }
-    setFormModalOpen(false)
     handleRefresh()
   }
 
@@ -738,53 +780,53 @@ export default function CockpitPage() {
     message.success('催办成功')
   }
 
-  // Status count helpers
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     items.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1 })
     return counts
   }, [items])
 
-  // Render
   return (
-    <div className="flex h-full" style={{ background: '#f5f5f5', minHeight: '100vh' }}>
+    <div className="flex h-full" style={{ background: 'var(--bg-page)', minHeight: '100vh', margin: -24 }}>
       {/* Left Sidebar */}
-      <div style={{ width: 220, flexShrink: 0, background: '#fff', borderRight: '1px solid #f0f0f0' }} className="flex flex-col">
-        {/* Brand */}
-        <div className="px-4 py-5 border-b">
-          <Title level={5} style={{ marginBottom: 2 }}>任务看板</Title>
+      <div style={{
+        width: 220,
+        flexShrink: 0,
+        background: 'var(--bg-card)',
+        borderRight: '1px solid var(--border-primary)',
+      }} className="flex flex-col">
+        <div className="px-4 py-5" style={{ borderBottom: '1px solid var(--border-secondary)' }}>
+          <Title level={5} style={{ marginBottom: 2, color: 'var(--text-primary)' }}>任务看板</Title>
           <Text type="secondary" style={{ fontSize: 12 }}>董事长会议跟踪</Text>
         </div>
 
-        {/* Add button */}
         <div className="px-4 py-3">
           <Button type="primary" icon={<PlusOutlined />} block onClick={handleAddTask}>
             新增任务
           </Button>
         </div>
 
-        {/* Status filters */}
         <div className="px-4 flex-1 overflow-y-auto">
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 8, display: 'block' }}>按状态筛选</Text>
           <div className="flex flex-col gap-1 mb-4">
             <div
-              className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${!filterStatus ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+              className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${!filterStatus ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
               onClick={() => setFilterStatus('')}
             >
               <Text style={{ fontSize: 13 }}>全部</Text>
-              <Badge count={items.length} style={{ backgroundColor: '#d9d9d9' }} />
+              <Badge count={items.length} style={{ backgroundColor: 'var(--text-tertiary)' }} />
             </div>
             {(Object.entries(STATUS_MAP) as [TaskStatus, string][]).map(([key, label]) => (
               <div
                 key={key}
-                className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${filterStatus === key ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${filterStatus === key ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
                 onClick={() => setFilterStatus(filterStatus === key ? '' : key)}
               >
                 <Space size={6}>
                   {statusIcon(key)}
                   <Text style={{ fontSize: 13 }}>{label}</Text>
                 </Space>
-                <Badge count={statusCounts[key] || 0} style={{ backgroundColor: '#d9d9d9' }} />
+                <Badge count={statusCounts[key] || 0} style={{ backgroundColor: 'var(--text-tertiary)' }} />
               </div>
             ))}
           </div>
@@ -793,7 +835,7 @@ export default function CockpitPage() {
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 8, display: 'block' }}>按优先级筛选</Text>
           <div className="flex flex-col gap-1 mb-4">
             <div
-              className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${!filterPriority ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+              className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${!filterPriority ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
               onClick={() => setFilterPriority('')}
             >
               <Text style={{ fontSize: 13 }}>全部</Text>
@@ -803,22 +845,21 @@ export default function CockpitPage() {
               return (
                 <div
                   key={p}
-                  className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${filterPriority === p ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                  className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer ${filterPriority === p ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
                   onClick={() => setFilterPriority(filterPriority === p ? '' : p)}
                 >
                   <Space size={6}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: PRIORITY_STYLES[p].color }} />
                     <Text style={{ fontSize: 13 }}>{p}</Text>
                   </Space>
-                  <Badge count={cnt} style={{ backgroundColor: '#d9d9d9' }} />
+                  <Badge count={cnt} style={{ backgroundColor: 'var(--text-tertiary)' }} />
                 </div>
               )
             })}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-4 py-3 border-t">
+        <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border-secondary)' }}>
           <Space>
             <Avatar size={28} icon={<UserOutlined />} />
             <Text style={{ fontSize: 13 }}>管理员</Text>
@@ -828,28 +869,27 @@ export default function CockpitPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <div className="bg-white px-6 py-4 border-b flex items-center justify-between">
+        <div className="px-6 py-4 flex items-center justify-between" style={{
+          background: 'var(--bg-card)',
+          borderBottom: '1px solid var(--border-primary)',
+        }}>
           <div>
-            <Title level={4} style={{ marginBottom: 0 }}>董事长会议跟踪看板</Title>
+            <Title level={4} style={{ marginBottom: 0, color: 'var(--text-primary)' }}>董事长会议跟踪看板</Title>
             <Text type="secondary" style={{ fontSize: 13 }}>实时跟踪任务进展，高效管理会议事项</Text>
           </div>
           <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading}>刷新</Button>
         </div>
 
-        {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Stats */}
           <Row gutter={[16, 16]} className="mb-4">
-            <Col span={4}><StatCard title="任务总数" value={stats.total || items.length} icon={<AppstoreOutlined />} color="#1890ff" bg="#e6f7ff" /></Col>
-            <Col span={4}><StatCard title="进行中" value={stats.inProgress || statusCounts['in_progress'] || 0} icon={<PlayCircleOutlined />} color="#1890ff" bg="#e6f7ff" /></Col>
-            <Col span={4}><StatCard title="已完成" value={stats.completed || statusCounts['completed'] || 0} icon={<CheckCircleOutlined />} color="#52c41a" bg="#f6ffed" /></Col>
-            <Col span={4}><StatCard title="有风险" value={stats.atRisk || statusCounts['at_risk'] || 0} icon={<WarningOutlined />} color="#faad14" bg="#fffbe6" /></Col>
-            <Col span={4}><StatCard title="已阻塞" value={stats.blocked || statusCounts['blocked'] || 0} icon={<CloseCircleOutlined />} color="#ff4d4f" bg="#fff2f0" /></Col>
-            <Col span={4}><StatCard title="已逾期" value={stats.overdue || items.filter(isOverdue).length} icon={<ExclamationCircleOutlined />} color="#ff4d4f" bg="#fff2f0" /></Col>
+            <Col xs={12} sm={8} lg={4}><StatCard title="任务总数" value={stats.total || items.length} icon={<AppstoreOutlined />} color="#4F46E5" bgColor="rgba(79,70,229,0.08)" /></Col>
+            <Col xs={12} sm={8} lg={4}><StatCard title="进行中" value={stats.inProgress || statusCounts['in_progress'] || 0} icon={<PlayCircleOutlined />} color="#3B82F6" bgColor="rgba(59,130,246,0.08)" /></Col>
+            <Col xs={12} sm={8} lg={4}><StatCard title="已完成" value={stats.completed || statusCounts['completed'] || 0} icon={<CheckCircleOutlined />} color="#10B981" bgColor="rgba(16,185,129,0.08)" /></Col>
+            <Col xs={12} sm={8} lg={4}><StatCard title="有风险" value={stats.atRisk || statusCounts['at_risk'] || 0} icon={<WarningOutlined />} color="#F59E0B" bgColor="rgba(245,158,11,0.08)" /></Col>
+            <Col xs={12} sm={8} lg={4}><StatCard title="已阻塞" value={stats.blocked || statusCounts['blocked'] || 0} icon={<CloseCircleOutlined />} color="#EF4444" bgColor="rgba(239,68,68,0.08)" /></Col>
+            <Col xs={12} sm={8} lg={4}><StatCard title="已逾期" value={stats.overdue || items.filter(isOverdue).length} icon={<ExclamationCircleOutlined />} color="#EF4444" bgColor="rgba(239,68,68,0.08)" /></Col>
           </Row>
 
-          {/* P0 Alert */}
           {(stats.p0Count || items.filter((i) => i.priority === 'P0').length) >= 5 && (
             <Alert
               type="warning"
@@ -861,7 +901,6 @@ export default function CockpitPage() {
             />
           )}
 
-          {/* Category Tabs */}
           <div className="mb-4">
             <Tabs
               activeKey={activeCategory}
@@ -877,7 +916,6 @@ export default function CockpitPage() {
             />
           </div>
 
-          {/* Toolbar */}
           <div className="flex items-center justify-between mb-4">
             <Space>
               <Input
@@ -910,7 +948,6 @@ export default function CockpitPage() {
             />
           </div>
 
-          {/* Views */}
           <Spin spinning={loading}>
             {view === VIEW_KANBAN && (
               <KanbanView items={filteredItems} onUpdate={handleEditTask} onDelete={handleDelete} onUrge={handleUrge} />
@@ -925,11 +962,10 @@ export default function CockpitPage() {
         </div>
       </div>
 
-      {/* Modals */}
       <TaskFormModal
         open={formModalOpen}
         title={formModalTitle}
-        initialValues={editingItem}
+        editingId={editingId}
         owners={owners}
         categories={categories}
         onOk={handleFormSubmit}

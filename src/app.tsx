@@ -1,10 +1,46 @@
 import './tailwind.css'
+import './global.less'
+import React, { useEffect } from 'react'
 import { history, RequestConfig } from 'umi'
+import { ConfigProvider, App, theme as antdTheme } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
 import { getToken } from '@/utils/auth'
 import { useUserStore } from '@/stores/useUserStore'
 import { useTenantStore } from '@/stores/useTenantStore'
+import { useAppStore } from '@/stores/useAppStore'
+import { getAntdTheme } from '@/constants/theme'
 import { message, Modal } from 'antd'
 
+// ─── Theme Provider Wrapper ────────────────────────────────────
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const appTheme = useAppStore((s) => s.theme)
+  const initTheme = useAppStore((s) => s.initTheme)
+  const isDark = appTheme === 'dark'
+
+  useEffect(() => {
+    initTheme()
+  }, [])
+
+  const themeConfig = getAntdTheme(isDark)
+
+  return (
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        ...themeConfig,
+      }}
+    >
+      <App>{children}</App>
+    </ConfigProvider>
+  )
+}
+
+export function rootContainer(container: React.ReactNode) {
+  return <ThemeProvider>{container}</ThemeProvider>
+}
+
+// ─── Request Config ────────────────────────────────────────────
 export const request: RequestConfig = {
   timeout: 30000,
   requestInterceptors: [
@@ -55,6 +91,7 @@ export const request: RequestConfig = {
   },
 }
 
+// ─── Initial State ─────────────────────────────────────────────
 export async function getInitialState() {
   const token = getToken()
   if (token) {
@@ -68,6 +105,7 @@ export async function getInitialState() {
   return { userInfo: null }
 }
 
+// ─── Route Guard ───────────────────────────────────────────────
 export function onRouteChange({ location }: { location: any }) {
   const token = getToken()
   const whiteList = ['/login', '/social/callback', '/pwdExpired', '/corp-select']

@@ -1,20 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
-import { Button, Space, Tag, Modal, message, Popconfirm, Form, Input, InputNumber, Select, Card, Row, Col } from 'antd'
+import React, { useState, useRef } from 'react'
+import { ProTable, ModalForm, ProFormText, ProFormSelect, ProFormTextArea, ProFormDigit, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag, message, Popconfirm, Card, Row, Col } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { listDict, addDict, updateDict, deleteDict, listDictItem, addDictItem, updateDictItem, deleteDictItem } from '@/services/system/dict'
 
 export default function DictPage() {
   const dictActionRef = useRef<ActionType>()
   const itemActionRef = useRef<ActionType>()
-  const [dictForm] = Form.useForm()
-  const [itemForm] = Form.useForm()
   const [dictModalOpen, setDictModalOpen] = useState(false)
   const [itemModalOpen, setItemModalOpen] = useState(false)
-  const [dictModalTitle, setDictModalTitle] = useState('')
-  const [itemModalTitle, setItemModalTitle] = useState('')
-  const [editingDictId, setEditingDictId] = useState('')
-  const [editingItemId, setEditingItemId] = useState('')
+  const [editingDict, setEditingDict] = useState<any>(null)
+  const [editingItem, setEditingItem] = useState<any>(null)
   const [selectedDict, setSelectedDict] = useState<any>(null)
 
   const dictColumns: ProColumns[] = [
@@ -54,30 +50,13 @@ export default function DictPage() {
   ]
 
   const handleAddDict = () => {
-    setDictModalTitle('新增字典')
-    setEditingDictId('')
-    dictForm.resetFields()
+    setEditingDict(null)
     setDictModalOpen(true)
   }
 
   const handleEditDict = (record: any) => {
-    setDictModalTitle('编辑字典')
-    setEditingDictId(record.id)
-    dictForm.setFieldsValue(record)
+    setEditingDict(record)
     setDictModalOpen(true)
-  }
-
-  const handleDictSubmit = async () => {
-    const values = await dictForm.validateFields()
-    if (editingDictId) {
-      await updateDict(values, editingDictId)
-      message.success('修改成功')
-    } else {
-      await addDict(values)
-      message.success('新增成功')
-    }
-    setDictModalOpen(false)
-    dictActionRef.current?.reload()
   }
 
   const handleDeleteDict = async (id: string) => {
@@ -89,30 +68,13 @@ export default function DictPage() {
 
   const handleAddItem = () => {
     if (!selectedDict) { message.warning('请先选择字典'); return }
-    setItemModalTitle('新增字典项')
-    setEditingItemId('')
-    itemForm.resetFields()
+    setEditingItem(null)
     setItemModalOpen(true)
   }
 
   const handleEditItem = (record: any) => {
-    setItemModalTitle('编辑字典项')
-    setEditingItemId(record.id)
-    itemForm.setFieldsValue(record)
+    setEditingItem(record)
     setItemModalOpen(true)
-  }
-
-  const handleItemSubmit = async () => {
-    const values = await itemForm.validateFields()
-    if (editingItemId) {
-      await updateDictItem(values, editingItemId)
-      message.success('修改成功')
-    } else {
-      await addDictItem({ ...values, dictId: selectedDict.id })
-      message.success('新增成功')
-    }
-    setItemModalOpen(false)
-    itemActionRef.current?.reload()
   }
 
   const handleDeleteItem = async (id: string) => {
@@ -161,23 +123,51 @@ export default function DictPage() {
           />
         </Card>
       </Col>
-      <Modal title={dictModalTitle} open={dictModalOpen} onOk={handleDictSubmit} onCancel={() => setDictModalOpen(false)}>
-        <Form form={dictForm} layout="vertical">
-          <Form.Item name="name" label="字典名称" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="code" label="字典编码" rules={[{ required: true }]}><Input disabled={!!editingDictId} /></Form.Item>
-          <Form.Item name="description" label="描述"><Input.TextArea rows={3} /></Form.Item>
-        </Form>
-      </Modal>
-      <Modal title={itemModalTitle} open={itemModalOpen} onOk={handleItemSubmit} onCancel={() => setItemModalOpen(false)}>
-        <Form form={itemForm} layout="vertical">
-          <Form.Item name="label" label="标签" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="value" label="值" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="color" label="颜色"><Input placeholder="如: blue, red, green" /></Form.Item>
-          <Form.Item name="sort" label="排序" initialValue={1}><InputNumber min={1} style={{ width: '100%' }} /></Form.Item>
-          <Form.Item name="status" label="状态" initialValue={1}><Select options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} /></Form.Item>
-          <Form.Item name="description" label="描述"><Input.TextArea rows={2} /></Form.Item>
-        </Form>
-      </Modal>
+      <ModalForm
+        title={editingDict ? '编辑字典' : '新增字典'}
+        open={dictModalOpen}
+        onOpenChange={setDictModalOpen}
+        modalProps={{ destroyOnClose: true }}
+        request={async () => editingDict || {}}
+        onFinish={async (values) => {
+          if (editingDict?.id) {
+            await updateDict(values, editingDict.id)
+            message.success('修改成功')
+          } else {
+            await addDict(values)
+            message.success('新增成功')
+          }
+          return true
+        }}
+      >
+        <ProFormText name="name" label="字典名称" rules={[{ required: true }]} />
+        <ProFormText name="code" label="字典编码" rules={[{ required: true }]} fieldProps={{ disabled: !!editingDict }} />
+        <ProFormTextArea name="description" label="描述" fieldProps={{ rows: 3 }} />
+      </ModalForm>
+      <ModalForm
+        title={editingItem ? '编辑字典项' : '新增字典项'}
+        open={itemModalOpen}
+        onOpenChange={setItemModalOpen}
+        modalProps={{ destroyOnClose: true }}
+        request={async () => editingItem || {}}
+        onFinish={async (values) => {
+          if (editingItem?.id) {
+            await updateDictItem(values, editingItem.id)
+            message.success('修改成功')
+          } else {
+            await addDictItem({ ...values, dictId: selectedDict.id })
+            message.success('新增成功')
+          }
+          return true
+        }}
+      >
+        <ProFormText name="label" label="标签" rules={[{ required: true }]} />
+        <ProFormText name="value" label="值" rules={[{ required: true }]} />
+        <ProFormText name="color" label="颜色" placeholder="如: blue, red, green" />
+        <ProFormDigit name="sort" label="排序" initialValue={1} fieldProps={{ min: 1 }} />
+        <ProFormSelect name="status" label="状态" initialValue={1} options={[{ label: '启用', value: 1 }, { label: '禁用', value: 2 }]} />
+        <ProFormTextArea name="description" label="描述" fieldProps={{ rows: 2 }} />
+      </ModalForm>
     </Row>
   )
 }

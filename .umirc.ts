@@ -63,10 +63,6 @@ export default defineConfig({
   },
   plugins: [],
   antd: {
-    dark: false,
-    configProvider: {},
-  },
-  theme: {
-    'primary-color': '#165DFF',
+    // Theme is handled by ConfigProvider in app.tsx
   },
 });
