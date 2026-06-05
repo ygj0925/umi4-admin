@@ -62,7 +62,6 @@ export default defineConfig({
     },
   },
   plugins: [],
-  tailwindcss: {},
   antd: {
     dark: false,
     configProvider: {},

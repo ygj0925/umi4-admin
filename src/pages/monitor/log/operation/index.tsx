@@ -1,3 +1,31 @@
-export default function MonitorLogOperationPage() {
-  return <div>Monitor Log Operation - Coming Soon</div>;
+import React, { useRef } from 'react'
+import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { Button, Tag } from 'antd'
+import { ExportOutlined } from '@ant-design/icons'
+import { listLog, exportOperationLog } from '@/services/monitor/log'
+import { useDownload } from '@/hooks/useDownload'
+
+export default function OperationLogPage() {
+  const actionRef = useRef<ActionType>()
+  const { download } = useDownload()
+
+  const columns: ProColumns[] = [
+    { title: '模块', dataIndex: 'module', width: 120 },
+    { title: '操作', dataIndex: 'description', ellipsis: true },
+    { title: '用户名', dataIndex: 'username', width: 120 },
+    { title: 'IP', dataIndex: 'ip', width: 140, search: false },
+    { title: '状态', dataIndex: 'status', width: 80,
+      render: (_, record) => <Tag color={record.status === 1 ? 'green' : 'red'}>{record.status === 1 ? '成功' : '失败'}</Tag>,
+    },
+    { title: '耗时', dataIndex: 'time', width: 100, search: false, render: (_, record) => `${record.time}ms` },
+    { title: '操作时间', dataIndex: 'createTime', width: 160 },
+  ]
+
+  return (
+    <ProTable headerTitle="操作日志" actionRef={actionRef} rowKey="id" columns={columns}
+      request={async (params) => { const { current, pageSize, ...rest } = params; const res = await listLog({ page: current, size: pageSize, type: 'OPERATION', ...rest }); return { data: res.data?.list || [], total: res.data?.total || 0, success: true } }}
+      pagination={{ defaultPageSize: 10 }} search={{ labelWidth: 'auto' }}
+      toolBarRender={() => [<Button key="export" icon={<ExportOutlined />} onClick={() => download(() => exportOperationLog({}), '操作日志.xlsx')}>导出</Button>]}
+    />
+  )
 }
