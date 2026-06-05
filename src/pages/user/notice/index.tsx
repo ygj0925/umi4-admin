@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, List, Tag, Button } from 'antd'
 import { history, useSearchParams } from 'umi'
 import { getUserNotice } from '@/services/system/userMessage'
+import { sanitizeHtml } from '@/utils/sanitize'
 
 export default function UserNoticePage() {
   const [searchParams] = useSearchParams()
@@ -26,7 +27,7 @@ function NoticeDetail({ id }: { id: string }) {
   return (
     <Card title={detail.title} extra={<Button onClick={() => history.back()}>返回</Button>}>
       <p style={{ color: '#999', marginBottom: 16 }}>{detail.createTime}</p>
-      <div dangerouslySetInnerHTML={{ __html: detail.content }} />
+      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(detail.content) }} />
     </Card>
   )
 }

@@ -5,6 +5,7 @@ import { UserOutlined, LockOutlined, SafetyOutlined, MobileOutlined, MailOutline
 import { useUserStore } from '@/stores/useUserStore'
 import { getImageCaptcha } from '@/services/captcha'
 import { encryptByRsa } from '@/utils/encrypt'
+import { sanitizeHtml } from '@/utils/sanitize'
 
 export default function LoginPage() {
   const [form] = Form.useForm()
@@ -34,7 +35,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const data: any = {
-        clientId: process.env.VITE_CLIENT_ID || 'ef51c9a3e9046c4f2ea45142c8a8344a',
+        clientId: process.env.VITE_CLIENT_ID,
       }
       if (activeTab === 'account') {
         data.username = values.username
@@ -117,7 +118,7 @@ export default function LoginPage() {
                     <div
                       onClick={loadCaptcha}
                       style={{ cursor: 'pointer', height: 40, width: 120 }}
-                      dangerouslySetInnerHTML={{ __html: captchaImg }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(captchaImg) }}
                     />
                   </Space>
                 </Form.Item>

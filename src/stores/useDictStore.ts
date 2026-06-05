@@ -1,11 +1,5 @@
 import { create } from 'zustand'
-
-interface DictItem {
-  label: string
-  value: string | number
-  color?: string
-  tag?: string
-}
+import type { DictItem } from '@/types/app'
 
 interface DictState {
   dictData: Record<string, DictItem[]>

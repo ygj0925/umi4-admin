@@ -2,23 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { setToken, clearToken } from '@/utils/auth'
 import * as authApi from '@/services/auth'
-
-interface UserInfo {
-  id: string
-  username: string
-  nickname: string
-  gender: 0 | 1 | 2
-  email: string
-  phone: string
-  avatar: string
-  pwdResetTime: string
-  pwdExpired: boolean
-  registrationDate: string
-  deptName: string
-  roles: string[]
-  roleNames: string[]
-  permissions: string[]
-}
+import type { UserInfo } from '@/services/auth'
 
 interface UserState {
   token: string

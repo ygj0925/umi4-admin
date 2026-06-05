@@ -1,6 +1,6 @@
 import { request } from 'umi'
 
-const API_PREFIX = '/sss-task'
+import { API_PREFIX } from '@/constants/api'
 const BASE_URL = '/system/role'
 
 export function listRole(query: any) {

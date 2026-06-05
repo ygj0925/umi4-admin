@@ -3,6 +3,7 @@ import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-comp
 import { Button, Space, Tag, Modal, message, Popconfirm, Form, Input, Select, Switch, Drawer } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { listNotice, addNotice, updateNotice, deleteNotice, getNotice } from '@/services/system/notice'
+import { sanitizeHtml } from '@/utils/sanitize'
 
 export default function NoticePage() {
   const actionRef = useRef<ActionType>()
@@ -118,7 +119,7 @@ export default function NoticePage() {
           <div>
             <h3>{detail.title}</h3>
             <p style={{ color: '#999', marginBottom: 16 }}>{detail.createTime}</p>
-            <div dangerouslySetInnerHTML={{ __html: detail.content }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(detail.content) }} />
           </div>
         )}
       </Drawer>

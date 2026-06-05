@@ -21,7 +21,8 @@
     "lodash-es": "^4.17.21",
     "qrcode.react": "^3.1.0",
     "query-string": "^9.0.0",
-    "zustand": "^4.5.0"
+    "zustand": "^4.5.0",
+    "dompurify": "^3.0.0"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",

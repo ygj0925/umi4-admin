@@ -9,11 +9,3 @@ export function encryptByRsa(txt: string) {
   encryptor.setPublicKey(publicKey)
   return encryptor.encrypt(txt) || txt
 }
-
-export function encodeByBase64(txt: string) {
-  return btoa(unescape(encodeURIComponent(txt)))
-}
-
-export function decodeByBase64(txt: string) {
-  return decodeURIComponent(escape(atob(txt)))
-}

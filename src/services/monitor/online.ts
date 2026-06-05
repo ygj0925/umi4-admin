@@ -1,6 +1,6 @@
 import { request } from 'umi'
 
-const API_PREFIX = '/sss-task'
+import { API_PREFIX } from '@/constants/api'
 const BASE_URL = '/monitor/online'
 
 export function listOnlineUser(query: any) {

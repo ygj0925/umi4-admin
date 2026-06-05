@@ -1,6 +1,6 @@
 import { request } from 'umi'
 
-const API_PREFIX = '/sss-task'
+import { API_PREFIX } from '@/constants/api'
 
 export function getImageCaptcha() {
   return request<any>(`${API_PREFIX}/captcha/image`, { method: 'GET' })
